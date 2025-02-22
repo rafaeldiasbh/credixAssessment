@@ -1,36 +1,27 @@
 from sqlalchemy.orm import Session
 from ..models.order import Order
 from ..models.product import Product
-from ..schemas.order import CheckoutSchema
+from ..schemas.order import CheckoutSchema, CheckoutCreateSchema
+import httpx
 
-def create_order(db: Session, order: CheckoutSchema):
-    # Insert a new Order
-    db_order = Order(
-        name=order.name,
-        address=order.address,
-        zipcode=order.zipcode,
-        phone=order.phone,
-        email=order.email,
-        productsvalue=order.productsvalue,
-        discount=order.discount,
-        freight=order.freight,
-        producttotal=order.producttotal,
-        paymentterm=order.paymentterm,
-        installments=order.installments,
-    )
+def create_order(db: Session, order: CheckoutCreateSchema) -> CheckoutSchema:
+    # Convert the Pydantic model to a dictionary
+    order_data = order.model_dump()
+
+    # Separate the products from the order data
+    products = order_data.pop("products")
+
+    # Create the Order object using the remaining data
+    db_order = Order(**order_data)
 
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
 
     # Insert the Products and associate them with the Order
-    for product in order.products:
-        db_product = Product(
-            name=product.name,
-            amount=product.amount,
-            unitcost=product.unitcost,
-            order_id=db_order.id,
-        )
+    for product in products:
+        product["order_id"] = db_order.id  
+        db_product = Product(**product)
         db.add(db_product)
 
     db.commit()

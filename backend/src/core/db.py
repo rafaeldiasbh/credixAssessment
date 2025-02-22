@@ -11,3 +11,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+# Automatically create/update the database schema
+# Not fit for production remember to remove it in favor of migrations
+Base.metadata.create_all(bind=engine)

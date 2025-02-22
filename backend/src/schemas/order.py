@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from typing import List, Optional
 
 class ProductSchema(BaseModel):
@@ -6,31 +6,33 @@ class ProductSchema(BaseModel):
     amount: int
     unitcost: float
 
-class CheckoutCreateSchema(BaseModel):
+class BaseCheckoutSchema(BaseModel):
     name: str
     address: str
-    zipcode: str = Field(..., min_length=5, max_length=10)
-    phone: str = Field(..., pattern=r"^\d{10,15}$")
-    email: EmailStr
-    productsvalue: float
+    zipcode: Optional[str] = Field(None, min_length=5, max_length=10)
+    phone: Optional[str] = Field(None, pattern=r"^\d{10,15}$")
+    email: Optional[EmailStr] = Field(None, description="Email address (optional)")
+    productstotal: float
     discount: float
     freight: float
-    producttotal: float
+    total: float
     paymentterm: int
     installments: int
+
+    # Custom validator to convert empty strings to None
+    @validator("zipcode", "phone", "email", pre=True)
+    def empty_str_to_none(cls, value):
+        if value == "":
+            return None
+        return value
+
+class CheckoutCreateSchema(BaseCheckoutSchema):
     products: List[ProductSchema]
 
-class CheckoutSchema(BaseModel):
-    id: str = Field(..., description="The ID of the order (required for PUT/PATCH/DELETE)")
-    name: str
-    address: str
-    zipcode: str = Field(..., min_length=5, max_length=10)
-    phone: str = Field(..., pattern=r"^\d{10,15}$")
-    email: EmailStr
-    productsvalue: float
-    discount: float
-    freight: float
-    producttotal: float
-    paymentterm: int
-    installments: int
-    products: List[ProductSchema]  # List of ProductSchema
+class CheckoutSchema(BaseCheckoutSchema):
+    id: int = Field(..., description="The ID of the order (required for PUT/PATCH/DELETE)")
+    status: str
+    products: Optional[List[ProductSchema]] = Field(
+        None,
+        description="List of products (optional for updates)"
+    )

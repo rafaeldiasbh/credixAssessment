@@ -13,7 +13,8 @@ dependencies = [
     "pydantic[email] (>=2.10.6,<3.0.0)",
     "databases (>=0.9.0,<0.10.0)",
     "alembic (>=1.14.1,<2.0.0)",
-    "sqlalchemy (>=2.0.38,<3.0.0)"
+    "sqlalchemy (>=2.0.38,<3.0.0)",
+    "httpx (>=0.28.1,<0.29.0)"
 ]
 
 [tool.poetry]
@@ -45,7 +46,7 @@ addopts = '-p no:warnings'
 
 [tool.taskipy.tasks]
 run = 'poetry run uvicorn src.main:app --reload'
-test = 'pytest -s -x --cov=src -vv'
+test = 'poetry run pytest -s -x --cov=src -vv'
 post_test = 'coverage html'
 lint = 'ruff check ./src && ruff check ./src --diff'
 format = 'ruff check ./src --fix && ruff format'
