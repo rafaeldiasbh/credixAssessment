@@ -10,7 +10,10 @@ requires-python = ">=3.12,<4.0"
 dependencies = [
     "fastapi[standard] (>=0.115.8,<0.116.0)",
     "uvicorn (>=0.34.0,<0.35.0)",
-    "pydantic[email] (>=2.10.6,<3.0.0)"
+    "pydantic[email] (>=2.10.6,<3.0.0)",
+    "databases (>=0.9.0,<0.10.0)",
+    "alembic (>=1.14.1,<2.0.0)",
+    "sqlalchemy (>=2.0.38,<3.0.0)"
 ]
 
 [tool.poetry]
@@ -22,6 +25,7 @@ ruff = "^0.9.7"
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 taskipy = "^1.14.1"
+uvicorn = "^0.34.0"
 
 [tool.ruff]
 line-length = 79
@@ -40,7 +44,7 @@ pythonpath = "./src"
 addopts = '-p no:warnings'
 
 [tool.taskipy.tasks]
-run = 'uvicorn src.app:app --reload'
+run = 'poetry run uvicorn src.main:app --reload'
 test = 'pytest -s -x --cov=src -vv'
 post_test = 'coverage html'
 lint = 'ruff check ./src && ruff check ./src --diff'
