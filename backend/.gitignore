@@ -11,7 +11,7 @@ __pycache__/
 *.so
 
 # database
-#sql_app.db
+sql_app.db
 
 # Distribution / packaging
 .Python
