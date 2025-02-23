@@ -22,6 +22,32 @@ async def get_all_orders(db: Session) -> List[CheckoutSchema]:
     
     return orders
 
+async def get_order_by_id(db: Session, order_id: int) -> CheckoutSchema:
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if not order:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Order with ID {order_id} not found"
+        )
+    
+    return order
+
+async def delete_order_by_id(db: Session, order_id: int):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if not order:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Order with ID {order_id} not found"
+        )
+    
+    # Delete associated products first
+    db.query(Product).filter(Product.order_id == order_id).delete()
+    
+    db.delete(order)
+    db.commit()
+
 async def create_order(db: Session, uuid: UUID, order: CheckoutCreateSchema) -> CheckoutSchema:
     # Check if the idempotency key already exists
     duplicated = db.query(Order).filter(Order.uuid == str(uuid)).first()
