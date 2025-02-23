@@ -9,7 +9,7 @@ const App: React.FC = () => {
     <Router>
       <div className="flex flex-col min-h-screen">
         <Navbar />
-        <div className="flex-grow p-4 overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}> {/* Adjust for Navbar height */}
+        <div className="flex-grow p-4" style={{ height: 'calc(100vh - 4rem)' }}> {/* Adjust for Navbar height */}
           <Routes>
             <Route path="/" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />

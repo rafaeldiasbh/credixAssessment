@@ -22,7 +22,7 @@ interface Buyer {
 
 const CheckoutPage: React.FC = () => {
   const [buyerData, setBuyerData] = useState<Buyer>({
-    name: 'RAFAEL GONCALVES DAIS',
+    name: 'RAFAEL GONCALVES DIAS',
     taxid: '26900161000125',
     address: 'R LAPINHA 741',
     address2: 'AP 505',
@@ -43,6 +43,7 @@ const CheckoutPage: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalYesNo, setModalYesNo] = useState<boolean>(false);
   const [modalResolve, setModalResolve] = useState<((value: boolean) => void) | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const addProduct = () => {
     if (newProduct.name && (newProduct.amount||0) > 0 && (newProduct.unitcost||0) > 0) {
@@ -57,28 +58,39 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleFinishOrder = async (idempotencyKey: string = '') => {
-    const productsSum = products.reduce((total, product) => total + (product.amount||0) * (product.unitcost||0), 0).toFixed(2);
-    const productstotal = {productstotal: productsSum};
-    const total = {total: calculateTotal()};
-    const body = {...buyerData, ...productstotal, discount, freight, ...total, paymentterm, installments, products};
-    
-    if(!idempotencyKey)
-      idempotencyKey = generateIdempotencyKey(JSON.stringify(body));
+  setLoading(true); // Start loading
+  
+  const productsSum = products.reduce((total, product) => total + (product.amount||0) * (product.unitcost||0), 0).toFixed(2);
+  const productstotal = { productstotal: productsSum };
+  const total = { total: calculateTotal() };
+  const body = { ...buyerData, ...productstotal, discount, freight, ...total, paymentterm, installments, products };
+  
+  if (!idempotencyKey)
+    idempotencyKey = generateIdempotencyKey(JSON.stringify(body));
 
+  try {
     const response = await fetchOrder(JSON.stringify(body), idempotencyKey);
+    const payload = await response.json();
 
-    if(response.status === 409){
-      showMessage("This purchase was alredy done are you sure to do it again?", true).then( yes => {
-        idempotencyKey = generateIdempotencyKey(JSON.stringify(body)+`${Date.now()}`);
-        handleFinishOrder(idempotencyKey);
-      }) 
-    }else if(response.ok){
-      showMessage('some ok message');
+    if (response.status === 409) {
+      showMessage("This purchase was already done. Are you sure to do it again?", true).then(yes => {
+        if (yes) {
+          idempotencyKey = generateIdempotencyKey(JSON.stringify(body) + `${Date.now()}`);
+          handleFinishOrder(idempotencyKey);
+        }
+      });
+    } else if (response.ok) {
+      showMessage('Order successful with order ID: \n' + payload.credixid);
+    } else {
+      showMessage(payload.detail.data.message);
     }
-    else
-      showMessage('some error message');
+  } catch (error) {
+    console.error("Error handling the order:", error);
+  } finally {
+    setLoading(false); 
+  }
+};
 
-  };
 
   const fetchOrder = (body : string, idempotencyKey: string) => {
      return fetch("http://127.0.0.1:8000/api/v1/orders", {
@@ -123,6 +135,13 @@ const CheckoutPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden"> {/* Full height, no overflow */}
       <div className="grid grid-cols-3 gap-4 p-4 flex-grow overflow-auto"> {/* Internal scrolling */}
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="absolute inset-0 flex justify-center items-center bg-gray-500 bg-opacity-50">
+            <div className="text-white font-bold">Processing Order...</div>
+          </div>
+        )}
+        
         {/* Left Section - Product Inputs */}
         <div className="col-span-2 p-4 border rounded">
           <h2 className="text-xl font-bold mb-4">Add Product</h2>
